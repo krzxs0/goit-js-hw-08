@@ -1,40 +1,45 @@
-import storage from './storage';
-import throttle from 'lodash/throttle';
+import throttle from 'lodash.throttle';
 
-const formRef = document.querySelector('form');
+const form = document.querySelector('.feedback-form');
+const emailInput = form.querySelector('input[name="email"]');
+const messageInput = form.querySelector('textarea[name="message"]');
+const localStorageKey = 'feedback-form-state';
 
-function loadFormFromLocalStorage() {
-  if (localStorage.getItem('feedback-form-state')) {
-    const formInfo = storage.load('feedback-form-state');
-    const localStorageArr = Object.keys(formInfo);
+const saveFormState = () => {
+  const formData = {
+    email: emailInput.value,
+    message: messageInput.value,
+  };
 
-    localStorageArr.forEach(name => {
-      formRef.elements[name].value = formInfo[name];
-    });
+  localStorage.setItem(localStorageKey, JSON.stringify(formData));
+};
+
+const loadFormState = () => {
+  const savedFormData = localStorage.getItem(localStorageKey);
+
+  if (savedFormData) {
+    const formData = JSON.parse(savedFormData);
+    emailInput.value = formData.email;
+    messageInput.value = formData.message;
   }
-}
+};
 
-function updateLocalStorage() {
-  const feedback = {};
-  const formData = new FormData(formRef);
-  formData.forEach((value, name) => {
-    feedback[name] = value;
-  });
-  storage.save('feedback-form-state', feedback);
-}
+const clearFormState = () => {
+  localStorage.removeItem(localStorageKey);
+  emailInput.value = '';
+  messageInput.value = '';
+};
 
-function clearFormAndLocalStorage(event) {
-  if (event.currentTarget.elements.message.value) {
-    event.preventDefault();
-    localStorage.clear();
-    formRef.reset();
-  } else {
-    alert('Заполните все поля');
-  }
-}
+const submitForm = (event) => {
+  event.preventDefault();
+  const formData = {
+    email: emailInput.value,
+    message: messageInput.value,
+  };
+  console.log(formData);
+  clearFormState();
+};
 
-loadFormFromLocalStorage();
-
-formRef.addEventListener('input', throttle(updateLocalStorage, 1000));
-formRef.addEventListener('submit', clearFormAndLocalStorage);
-
+form.addEventListener('input', throttle(saveFormState, 500));
+window.addEventListener('load', loadFormState);
+form.addEventListener('submit', submitForm);
