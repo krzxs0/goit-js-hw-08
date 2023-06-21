@@ -1,8 +1,9 @@
 import Player from '@vimeo/player';
-import throttle from 'lodash/throttle';
 
 const iframe = document.querySelector('iframe');
 const player = new Player(iframe);
+
+let timeoutId;
 
 function saveCurrentTimeToLocalStorage(seconds) {
   localStorage.setItem('videoplayer-current-time', JSON.stringify(seconds));
@@ -13,25 +14,22 @@ function handleTimeUpdate(event) {
   saveCurrentTimeToLocalStorage(seconds);
 }
 
-player.on('timeupdate', throttle(handleTimeUpdate, 1000));
+function throttle(func, delay) {
+  let lastCall = 0;
 
-const storedTime = localStorage.getItem('videoplayer-current-time');
-if (storedTime) {
-  const currentTime = JSON.parse(storedTime);
-  player.setCurrentTime(currentTime)
-    .then(function (seconds) {
-      console.log(`Значение времени из localStorage: ${seconds}`);
-    })
-    .catch(function (error) {
-      switch (error.name) {
-        case 'RangeError':
-          console.log('Указано некорректное время в setCurrentTime, установлено время 0');
-          break;
+  return function (...args) {
+    const now = new Date().getTime();
 
-        default:
-          console.log('Ошибка с другими причинами');
-          break;
-      }
-    });
+    if (now - lastCall >= delay) {
+      func(...args);
+      lastCall = now;
+    } else {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func(...args);
+        lastCall = now;
+      }, delay);
+    }
+  };
 }
 
