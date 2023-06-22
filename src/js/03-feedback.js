@@ -43,3 +43,4 @@ const submitForm = (event) => {
 form.addEventListener('input', throttle(saveFormState, 500));
 window.addEventListener('load', loadFormState);
 form.addEventListener('submit', submitForm);
+тзь
